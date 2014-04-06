@@ -1,8 +1,9 @@
 s3cleaner
 =========
 
-cleaning s3 with fog
+## cleaning s3 with fog
 
+  ```Shell
 λ: ruby s3cleaner.rb --help
 Usage: s3cleaner.rb [options]
 
@@ -13,7 +14,7 @@ Usage: s3cleaner.rb [options]
     -b, --bucket BUCKET              Search for keys in a specific bcuket
     -d, --delete                     Actually do a delete. If not specified , just list the keys found that match
     -h, --help                       Show this message
-
+  ```
 
   ```Shell
 λ: ruby s3cleaner.rb -k AWS_ACCESS_KEY  -s AWS_SECRET_KEY -a "1d" -b fog-demo-1396507025 -r test
