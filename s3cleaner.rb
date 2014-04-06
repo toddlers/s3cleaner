@@ -2,10 +2,8 @@
 
 # Find or delete files in S3 older than a given age and matching a pattern
 
+require 'rubygems'
 require 'fog'
-require 'pp'
-require 'date'
-require 'chronic'
 require 'time'
 
 class S3Cleaner
