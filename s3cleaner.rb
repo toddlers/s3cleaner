@@ -18,7 +18,7 @@ class S3Cleaner
       opts.on("-s","--secret AWS_SECRET_KEY", "A SECRET ACCESS KEY") do |s|
       options[:secret] = s
       end
-      opts.on("-a" ,"--maxage MAX_AGE","MAX_AGE In seconds") do |a|
+      opts.on("-a" ,"--maxage MAX_AGE","MAX_AGE in days") do |a|
         options[:maxage] = a
       end
       opts.on("-r","--regex REGEX","Only consider keys matching this REGEX") do |r|
