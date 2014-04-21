@@ -1,10 +1,11 @@
-#!/usr/bin/evn ruby
+#!/usr/bin/env ruby
 
 # Find or delete files in S3 older than a given age and matching a pattern
 
 require 'rubygems'
 require 'fog'
 require 'time'
+require 'optparse'
 
 class S3Cleaner
   def self.parse(args)
