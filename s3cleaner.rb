@@ -46,9 +46,10 @@ class S3Cleaner
       raise OptionParser::MissingArgument, "-r , no REGEX name specified" if not options[:regex]
     rescue SystemExit
       exit
-    rescue Exception => e
+    rescue OptionParser::ParseError
+      puts "Oops... #{$!}"
       #puts "Error " + e, "#{__FILE__} -h for options"
-      puts e
+      puts opts
       exit
     end
     options
@@ -108,17 +109,6 @@ class S3Cleaner
     return fd
   end
 
-  # Deleting files
-
-  def self.delete_file(connection,bucket,files)
-    connection.directories.get(bucket).files.all.each do |file|
-      files.each do |f|
-        if file.key == f
-          file.destroy
-        end
-      end
-    end
-  end
 
   def self.run(args)
     opts = parse(args)
@@ -130,7 +120,7 @@ class S3Cleaner
       filesToDelete =  files_to_delete(files,maxage)
       if opts[:delete]
         puts "==Deleting all the files in #{bucket_name} =="
-        delete_files(connection,bucket_name,filesToDelete) if not filesToDelete.empty?
+        connection.delete_multiple_objects(bucket_name,filesToDelete) if not filesToDelete.empty?
       else
         puts "==Below is the list of files present in #{bucket_name}==\n\n"
         puts filesToDelete.join("\n") if not filesToDelete.empty?
