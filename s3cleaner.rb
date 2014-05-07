@@ -5,6 +5,7 @@
 require 'rubygems'
 require 'time'
 require 'optparse'
+require 'yaml'
 begin 
   require 'fog'
 rescue
@@ -36,6 +37,17 @@ class S3Cleaner
       options[:delete] = false
       opts.on("-d","--delete","Actually do a delete. If not specified , just list the keys found that match") do
         options[:delete] = true
+      end
+      opts.on("-c","--config FILE","Read options from file") do |c|
+        fp = YAML::load(File.open(c))
+        options[:key] = fp['AWS_ACCESS_KEY_ID']
+        options[:secret] = fp['AWS_SECRET_ACCESS_KEY']
+        options[:regex] = fp['REGEX']
+        options[:maxage] = fp["AGE"]
+        options[:bucket] = fp['BUCKET']
+        if options['ACTION'].eql? "DELETE"
+          options[:delete] = true
+        end
       end
       opts.on_tail("-h","--help","Show this message") do
         puts opts
