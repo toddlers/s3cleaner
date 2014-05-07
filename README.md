@@ -55,12 +55,5 @@ The fog-demo-1396507025 is empty !!
 316374825001.xml
 316374993329.xml
   ```
-  
-  ```Shell
-λ: ruby s3cleaner.rb -k AWS_ACCESS_KEY -s AWS_SECRET_KEY -a "1d" -b fog-demo-1396507000  -r Clustering
-==Below is the list of files present in fog-demo-1396507000==
-Clustering.jar
-ClusteringNew.jar
-  ```
 
 
