@@ -35,6 +35,11 @@ ACTION: 'LIST'
 - Two types of actions DELETE and LIST
   - LIST will only list the files
   - DELETE will do the actual delete
+  - Default option is list
+   
+- Regex for files
+  - You can leave that empty, if you dont want to search for pattern based file
+  - If you specify the regex it will give only files which matches the regex
 
 
   ```Shell
