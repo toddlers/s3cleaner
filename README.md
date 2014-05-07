@@ -46,7 +46,7 @@ The fog-demo-1396507025 is empty !!
   
   ```Shell
 λ: ruby s3cleaner.rb --config config.yaml
-==Below is the list of files present in NewsProcessingDocumentsXML==
+==Below is the list of files present in FOO==
 
  == Total Number of File ==  132
 316374825001.xml
