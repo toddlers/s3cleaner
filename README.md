@@ -4,8 +4,6 @@ s3cleaner
 ## cleaning s3 with fog
 
 ## SYNOPSIS
-ebs_snapshot.rb -c config.yaml --dry
-
 ```
 $: ruby s3cleaner.rb --help
 Usage: s3cleaner.rb [options]
