@@ -26,6 +26,7 @@ class S3Cleaner
       opts.on("-a" ,"--maxage MAX_AGE","MAX_AGE in days") do |a|
         options[:maxage] = a
       end
+      options[:regex] = ''
       opts.on("-r","--regex REGEX","Only consider keys matching this REGEX") do |r|
         options[:regex] = r
       end
@@ -47,7 +48,6 @@ class S3Cleaner
       raise OptionParser::MissingArgument, "-s , no AWS_SECRET_KEY specified" if not options[:secret]
       raise OptionParser::MissingArgument, "-a , no MAX_AGE specified" if not options[:maxage]
       raise OptionParser::MissingArgument, "-b , no BUCKET name specified" if not options[:bucket]
-      raise OptionParser::MissingArgument, "-r , no REGEX name specified" if not options[:regex]
     rescue SystemExit
       exit
     rescue OptionParser::ParseError
