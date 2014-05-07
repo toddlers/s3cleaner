@@ -3,9 +3,13 @@
 # Find or delete files in S3 older than a given age and matching a pattern
 
 require 'rubygems'
-require 'fog'
 require 'time'
 require 'optparse'
+begin 
+  require 'fog'
+rescue
+  puts "Missing the fog gem ! Try sudo gem install fog"
+end
 
 class S3Cleaner
   def self.parse(args)
@@ -123,6 +127,7 @@ class S3Cleaner
         connection.delete_multiple_objects(bucket_name,filesToDelete) if not filesToDelete.empty?
       else
         puts "==Below is the list of files present in #{bucket_name}==\n\n"
+        puts " == Total Number of File ==  " + filesToDelete.count.to_s + "\n"
         puts filesToDelete.join("\n") if not filesToDelete.empty?
       end
     else
