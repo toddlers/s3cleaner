@@ -6,7 +6,6 @@ require 'rubygems'
 require 'time'
 require 'optparse'
 require 'yaml'
-require 'pp'
 begin 
   require 'fog'
 rescue
@@ -24,10 +23,7 @@ class S3Cleaner
         options[:delete] = true
       end
       opts.on("-c","--config FILE","Read options from file") do |c|
-        fp = YAML::load(File.open(c))
-        options[:key] = fp['AWS_ACCESS_KEY_ID']
-        options[:secret] = fp['AWS_SECRET_ACCESS_KEY']
-        options[:bucket] = fp['BUCKETS']
+        options[:config] = c
       end
       opts.on_tail("-h","--help","Show this message") do
         puts opts
@@ -36,14 +32,11 @@ class S3Cleaner
     end
     begin
       opts.parse(args)
-      raise OptionParser::MissingArgument, "no AWS_ACCESS_KEY specified" if not options[:key]
-      raise OptionParser::MissingArgument, "no AWS_ACCESS_SECRET_KEY specified" if not options[:secret]
-      raise OptionParser::MissingArgument, "no no buckets names specified specified" if not options[:bucket]
+      raise OptionParser::MissingArgument, "-c no config file specified" if not options[:config]
     rescue SystemExit
       exit
     rescue OptionParser::ParseError
       puts "Oops... #{$!}"
-      #puts "Error " + e, "#{__FILE__} -h for options"
       puts opts
       exit
     end
@@ -101,10 +94,25 @@ class S3Cleaner
 
   def self.run(args)
     opts = parse(args)
-    buckets= opts[:bucket]
-    connection = get_s3connection(opts[:key],opts[:secret])
+    config = opts[:config]
+    if File.exists? config
+      puts "Loading bucket configuration and AWS credentials from #{config}"
+      fp = YAML::load(File.open(config))
+      buckets= fp["BUCKETS"]
+      aws_access_key = fp["AWS_ACCESS_KEY_ID"]
+      aws_secret_key = fp["AWS_SECRET_ACCESS_KEY"]
+    else
+      puts "- Config file #{config} not found, nothing todo here"
+      exit 1
+    end
+
+    raise "No buckets specified" if not buckets
+    raise "No AWS ACCESS KEY ID specified" if not aws_access_key
+    raise "No AWS SECRET ACCESS KEY specified" if not aws_secret_key
+
+    connection = get_s3connection(aws_access_key,aws_secret_key)
     buckets.each do |bucket,prop|
-      filesToDelete = files_to_delete(connection,bucket,prop)
+    filesToDelete = files_to_delete(connection,bucket,prop)
       if opts[:delete]
         puts "==Deleting " + filesToDelete.count.to_s + " objects in #{bucket} =="
         connection.delete_multiple_objects(bucket,filesToDelete) if not filesToDelete.empty?
