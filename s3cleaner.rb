@@ -125,6 +125,7 @@ class S3Cleaner
     if opts[:only]
       bucket = opts[:only]
       prop = buckets["#{bucket}"]
+      puts "Processing only #{bucket}...."
       filesToDelete = files_to_delete(connection,bucket,prop)
       if opts[:delete]
         delete_objects(connection,bucket,filesToDelete)
