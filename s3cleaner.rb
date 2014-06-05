@@ -6,6 +6,7 @@ require 'rubygems'
 require 'time'
 require 'optparse'
 require 'yaml'
+require 'pp'
 begin 
   require 'fog'
 rescue
@@ -18,22 +19,6 @@ class S3Cleaner
     opts = OptionParser.new do |opts|
       opts.banner = "Usage: #{__FILE__} [options]"
       opts.separator ""
-      opts.on("-k","--key AWS_ACCESS_KEY", "AWS ACCESS KEY ID") do |k|
-        options[:key] = k
-      end
-      opts.on("-s","--secret AWS_SECRET_KEY", "A SECRET ACCESS KEY") do |s|
-      options[:secret] = s
-      end
-      opts.on("-a" ,"--maxage MAX_AGE","MAX_AGE in days") do |a|
-        options[:maxage] = a
-      end
-      options[:regex] = ''
-      opts.on("-r","--regex REGEX","Only consider keys matching this REGEX") do |r|
-        options[:regex] = r
-      end
-      opts.on("-b","--bucket BUCKET","Search for keys in a specific bcuket") do |b|
-        options[:bucket] = b
-      end
       options[:delete] = false
       opts.on("-d","--delete","Actually do a delete. If not specified , just list the keys found that match") do
         options[:delete] = true
@@ -42,12 +27,7 @@ class S3Cleaner
         fp = YAML::load(File.open(c))
         options[:key] = fp['AWS_ACCESS_KEY_ID']
         options[:secret] = fp['AWS_SECRET_ACCESS_KEY']
-        options[:regex] = fp['REGEX']
-        options[:maxage] = fp["AGE"]
-        options[:bucket] = fp['BUCKET']
-        if options['ACTION'].eql? "DELETE"
-          options[:delete] = true
-        end
+        options[:bucket] = fp['BUCKETS']
       end
       opts.on_tail("-h","--help","Show this message") do
         puts opts
@@ -56,10 +36,9 @@ class S3Cleaner
     end
     begin
       opts.parse(args)
-      raise OptionParser::MissingArgument, "-k , no AWS_ACCESS_KEY specified" if not options[:key]
-      raise OptionParser::MissingArgument, "-s , no AWS_SECRET_KEY specified" if not options[:secret]
-      raise OptionParser::MissingArgument, "-a , no MAX_AGE specified" if not options[:maxage]
-      raise OptionParser::MissingArgument, "-b , no BUCKET name specified" if not options[:bucket]
+      raise OptionParser::MissingArgument, "no AWS_ACCESS_KEY specified" if not options[:key]
+      raise OptionParser::MissingArgument, "no AWS_ACCESS_SECRET_KEY specified" if not options[:secret]
+      raise OptionParser::MissingArgument, "no no buckets names specified specified" if not options[:bucket]
     rescue SystemExit
       exit
     rescue OptionParser::ParseError
@@ -103,47 +82,37 @@ class S3Cleaner
   #           >,
   #
 
-  def self.list_files(connection,bucket,prefix)
-    files = {}
-    connection.directories.get(bucket, prefix: prefix).files.map do |file|
-      files[file.key] = file.last_modified
-    end
-    return files
-  end
-
   # Get a list of files to delete
 
-  def self.files_to_delete(files,maxage)
+  def self.files_to_delete(connection,bucket,prop)
     fd = []
     now = Time.now.utc
-    files.each do |name,time|
-      age = ((now - time).to_i)/(3600*24)
+    connection.directories.get(bucket, prefix:prop["REGEX"]).files.map do |file|
+      age = (( now - file.last_modified).to_i)/(3600*24)
+      maxage = prop["AGE"].scan(/\d+/)[0].to_i
       if age > maxage
-       fd << name
+        fd << file.key
       end
     end
     return fd
   end
 
 
+
   def self.run(args)
     opts = parse(args)
-    bucket_name = opts[:bucket]
+    buckets= opts[:bucket]
     connection = get_s3connection(opts[:key],opts[:secret])
-    files = list_files(connection,bucket_name,opts[:regex])
-    maxage = opts[:maxage].scan(/\d+/)[0].to_i
-    if not files.empty?
-      filesToDelete =  files_to_delete(files,maxage)
+    buckets.each do |bucket,prop|
+      filesToDelete = files_to_delete(connection,bucket,prop)
       if opts[:delete]
-        puts "==Deleting all the files in #{bucket_name} =="
-        connection.delete_multiple_objects(bucket_name,filesToDelete) if not filesToDelete.empty?
+        puts "==Deleting " + filesToDelete.count.to_s + " objects in #{bucket} =="
+        connection.delete_multiple_objects(bucket,filesToDelete) if not filesToDelete.empty?
       else
-        puts "==Below is the list of files present in #{bucket_name}==\n\n"
+        puts "==Below are the list of objects present in #{bucket}==\n\n"
         puts " == Total Number of File ==  " + filesToDelete.count.to_s + "\n"
         puts filesToDelete.join("\n") if not filesToDelete.empty?
       end
-    else
-      puts "The #{bucket_name} is empty !!"
     end
   end
 end
