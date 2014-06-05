@@ -6,7 +6,7 @@ require 'rubygems'
 require 'time'
 require 'optparse'
 require 'yaml'
-begin 
+begin
   require 'fog'
 rescue
   puts "Missing the fog gem ! Try sudo gem install fog"
@@ -24,6 +24,9 @@ class S3Cleaner
       end
       opts.on("-c","--config FILE","Read options from file") do |c|
         options[:config] = c
+      end
+      opts.on("-o","--only SECTION","Process only specified section of the config") do |o|
+        options[:only] = o
       end
       opts.on_tail("-h","--help","Show this message") do
         puts opts
@@ -90,6 +93,16 @@ class S3Cleaner
     return fd
   end
 
+  def self.delete_objects(connection,bucket,filesToDelete)
+    puts "==Deleting " + filesToDelete.count.to_s + " objects in #{bucket} =="
+    connection.delete_multiple_objects(bucket,filesToDelete) if not filesToDelete.empty?
+  end
+
+  def self.list_objects(bucket,filesToDelete)
+    puts "==Below are the list of objects present in #{bucket}==\n\n"
+    puts " == Total Number of File ==  " + filesToDelete.count.to_s + "\n"
+    puts filesToDelete.join("\n") if not filesToDelete.empty?
+  end
 
 
   def self.run(args)
@@ -105,21 +118,27 @@ class S3Cleaner
       puts "- Config file #{config} not found, nothing todo here"
       exit 1
     end
-
-    raise "No buckets specified" if not buckets
-    raise "No AWS ACCESS KEY ID specified" if not aws_access_key
-    raise "No AWS SECRET ACCESS KEY specified" if not aws_secret_key
-
+    raise "No buckets specified" unless buckets
+    raise "No AWS ACCESS KEY ID specified" unless aws_access_key
+    raise "No AWS SECRET ACCESS KEY specified" unless aws_secret_key
     connection = get_s3connection(aws_access_key,aws_secret_key)
-    buckets.each do |bucket,prop|
-    filesToDelete = files_to_delete(connection,bucket,prop)
+    if opts[:only]
+      bucket = opts[:only]
+      prop = buckets["#{bucket}"]
+      filesToDelete = files_to_delete(connection,bucket,prop)
       if opts[:delete]
-        puts "==Deleting " + filesToDelete.count.to_s + " objects in #{bucket} =="
-        connection.delete_multiple_objects(bucket,filesToDelete) if not filesToDelete.empty?
+        delete_objects(connection,bucket,filesToDelete)
       else
-        puts "==Below are the list of objects present in #{bucket}==\n\n"
-        puts " == Total Number of File ==  " + filesToDelete.count.to_s + "\n"
-        puts filesToDelete.join("\n") if not filesToDelete.empty?
+        list_objects(bucket,filesToDelete)
+      end
+    else
+      buckets.each do |bucket,prop|
+        filesToDelete = files_to_delete(connection,bucket,prop)
+        if opts[:delete]
+          delete_objects(connection,bucket,filesToDelete)
+        else
+          list_objects(bucket,filesToDelete)
+        end
       end
     end
   end
