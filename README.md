@@ -10,8 +10,9 @@ Usage: s3cleaner.rb [options]
 
     -d, --delete                     Actually do a delete. If not specified , just list the keys found that match
     -c, --config FILE                Read options from file
+    -o, --only SECTION               Process only specified section of the config
     -h, --help                       Show this message
-λ:
+
 ```
 
 ## Example config
